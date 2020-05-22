@@ -1,7 +1,5 @@
 package GameBoard;
 
-import ViewControl.BoardGame;
-
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,8 +13,8 @@ public class ChessBoard implements BoardGame {
 
     private final String[][] board = new String[8][8]; // represents chess board
     private Color[] tileColors = {new Color(240, 240,240), Color.lightGray}; // to display for ViewControl
-    private Color activeTilesColor = Color.yellow; //new Color(255, 255, 0, Math.round(0.7f*255));
-    private final String[] colors = {"black", "white"}; // represent players, should maybe be changed to generalize
+    private Color activeTilesColor = Color.yellow;
+    private final String[] colors = {"black", "white"};
     private String activeColor = colors[1];
     private String dormantColor = colors[0];
     private String msg = activeColor.replace(activeColor.charAt(0), Character.toUpperCase(activeColor.charAt(0))) + "'s turn, choose a piece to move";
@@ -24,8 +22,8 @@ public class ChessBoard implements BoardGame {
     private int[] activePosition;
     private final int maxIndex = 7;
     private boolean chessFlag = false; // used to flag that a chessmove has been made for the "switchTurn()" function
-    public ArrayList<String> whitePiecesTaken = new ArrayList<>();
-    public ArrayList<String> blackPiecesTaken = new ArrayList<>();
+    private final ArrayList<String> whitePiecesTaken = new ArrayList<>();
+    private final ArrayList<String> blackPiecesTaken = new ArrayList<>();
     private int[] promotionTile; // has values if we at the end of turn need to promote pawn to queen
     private boolean[][] moveOk = new boolean[8][8]; // represents valid moves for activePiece (aka marked piece)
 
@@ -92,24 +90,82 @@ public class ChessBoard implements BoardGame {
         }
     }
 
-    public void switch_turn() {
+    /**
+     * Promotes a pawn
+     */
+    private void promotePawn(int i, int j){
+        board[i][j] = activeColor + "_queen";
+        promotionTile = new int[] {i, j};
+    }
+
+    /**
+     * Called after every valid move to check if the move involves a pawn that is to be promoted
+     */
+    private void checkForPromotion(int i, int j){
+        if (activePiece.substring(6).equals("pawn") && i==0 && activeColor.equals("white")){
+            promotePawn(i, j);
+        } else if(activePiece.substring(6).equals("pawn") && i == 7 && activeColor.equals("black")){
+            promotePawn(i, j);
+        }
+    }
+
+    /**
+     * Called after each valid move to check if dormantcolor is in a checked position.
+     * */
+    private void checkForCheck(int played_i, int played_j) {
+        HashSet<int[]> threatPositions = new HashSet<>();
+        int[] opposingKingsPosition = new int[]{-37,-37}; //just to initialize to something
+
+        // loopa igenom hela brädet, för varje pjäs av rätt färg få möjliga drag och se om något av de går till den andres kung.
+        String piece;
+        String color;
+        String pieceName;
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                pieceName = board[i][j];
+                if (pieceName.equals("-")) {
+                    continue; //ignore empty Tiles
+                } else {
+                    piece = pieceName.substring(6);
+                    color = pieceName.substring(0, 5);
+                }
+                if (piece.equals("king") && color.equals(dormantColor)) {
+                    opposingKingsPosition = new int[] {i, j}; // get opposing players king's position
+                }
+
+                // get all positions activeColor threatens after one successful move
+                if (color.equals(activeColor)) {
+                    activePiece = pieceName; // needed for calculateOkMoves() to work
+                    calculateOkMoves(new int[]{i, j});
+
+                    for (int inner_i = 0; inner_i < 8; inner_i++) {
+                        for (int inner_j = 0; inner_j < 8; inner_j++) {
+                            if (moveOk[inner_i][inner_j]) {
+                                threatPositions.add(new int[] {inner_i, inner_j});
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (int[] threatPosition: threatPositions) {
+            if (Arrays.equals(threatPosition, opposingKingsPosition)) { //check if dormant color is in checked position
+                chessFlag = true;
+                msg = dormantColor.replace(dormantColor.charAt(0), Character.toUpperCase(dormantColor.charAt(0)))
+                        + " is Checked, try to escape!";
+            }
+
+        }
+    }
+
+    private void switch_turn() {
         activeColor = activeColor.equals(colors[1]) ? colors[0]: colors[1];
         dormantColor = dormantColor.equals(colors[0]) ? colors[1]: colors[0];
-        if(chessFlag){
+        if (chessFlag) {
             chessFlag = false; // if player moved into chess we don't want to do the msg change
             return;
         }
         msg = activeColor.replace(activeColor.charAt(0), Character.toUpperCase(activeColor.charAt(0))) + "'s turn, choose a piece to move";
-    }
-
-    public static void main(String[] args) {
-        ChessBoard gb = new ChessBoard();
-        for (String[] row: gb.board) {
-            for (String tile: row) {
-                System.out.print(String.format("%-12s\t", tile));
-            }
-            System.out.println();
-        }
     }
 
     private void moveToEmpty(int i, int j) {
@@ -117,7 +173,7 @@ public class ChessBoard implements BoardGame {
         board[i][j] = activePiece;
         board[activePosition[0]][activePosition[1]] = tmp;
         checkForPromotion(i, j);
-        checkForChess(i,j);
+        checkForCheck(i, j);
         activePiece = "";
         switch_turn();
     }
@@ -128,118 +184,39 @@ public class ChessBoard implements BoardGame {
         board[i][j] = activePiece;
         board[activePosition[0]][activePosition[1]] = "-";
         checkForPromotion(i, j);
-        checkForChess(i,j);
+        checkForCheck(i, j);
         activePiece = "";
         switch_turn();
     }
 
-    private void checkForChess(int played_i, int played_j) {
-        /**
-         * Called after each valid move to check if dormantcolor is in a checked position.
-         * */
-
-        System.out.println("Check for chess called");
-        HashSet<int[]> threatPositions = new HashSet<int[]>();
-        int[] opposingKingsPosition = new int[]{-37,-37}; //just to initialize to something
-
-        //loopa igenom hela brädet, för varje pjäs av rätt färg få möjliga drag och se om något av de går till den andres kung.
-        int counter = 1;
-        for(int i=0; i < 8; i++){
-            for(int j = 0; j < 8; j++){
-                String pieceName = board[i][j];
-                if (pieceName.length()<5){
-                    continue; //ignore empty Tiles
-                }
-                if(pieceName.substring(6).equals("king") && pieceName.substring(0, 5).equals(dormantColor)){
-                    opposingKingsPosition = new int[]{i,j}; // get opposing players king's position
-                }
-
-                // get all positions activeColor threatens after a successful move
-                if(pieceName.substring(0, 5).equals(activeColor)){
-                    System.out.println(counter);
-                    System.out.println(pieceName);
-                    counter++;
-                    activePiece = pieceName; // needed for calculateOkMoves() to work
-                    calculateOkMoves(new int[]{i, j});
-
-                    if(pieceName.equals("white_queen")){
-                        System.out.println(board[0][4]);
-                        System.out.println(moveOk[0][4]);
-                    }
-
-                     for(int inner_i=0; inner_i<8; inner_i++){
-                        for(int inner_j=0; inner_j<8; inner_j++){
-                            if (moveOk[inner_i][inner_j]){
-                                System.out.println("threat");
-                                threatPositions.add(new int[]{inner_i, inner_j});
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        System.out.println(threatPositions);
-        for(int[] threatPosition: threatPositions) {
-            if(Arrays.equals(threatPosition, opposingKingsPosition)){ //check if dormant color is in checked position
-                System.out.println("CHECK!!!");
-                chessFlag = true;
-                msg = dormantColor.replace(dormantColor.charAt(0), Character.toUpperCase(dormantColor.charAt(0)))
-                        + " is Checked, try to escape!";
-            }
-
-        }
-    }
-
-    private void checkForPromotion(int i, int j){
-        /**
-         * Called after every valid move to check if the move involves a pawn that is to be promoted
-         * */
-
-        if (activePiece.substring(6).equals("pawn") && i==0 && activeColor.equals("white")){
-            promotePawn(i, j);
-        } else if(activePiece.substring(6).equals("pawn") && i == 7 && activeColor.equals("black")){
-            promotePawn(i, j);
-        }
-    }
-
-    private void promotePawn(int i, int j){
-        /**
-         * Promotes a pawn
-         * */
-        board[i][j] = activeColor + "_queen";
-        promotionTile = new int[] {i, j};
-        System.out.println("In Promote:");
-        System.out.println(Integer.toString(i) + Integer.toString(j));
-        System.out.println(board[i][j]);
-    }
-
-    public String[][] getBoard() {
-        return board;
-    }
     private void calculateOkMoves(int[] activePosition){
-
-        System.out.println("Calc ok moves called");
-        if (activePiece.substring(6).equals("pawn")) moveOk = MoveOk.pawn(activePosition, activeColor, board);
-        else if (activePiece.substring(6).equals("rook")) moveOk = MoveOk.rook(activePosition, activeColor, board);
-        else if (activePiece.substring(6).equals("knight")) moveOk = MoveOk.knight(activePosition, activeColor, board);
-        else if (activePiece.substring(6).equals("bishop")) moveOk = MoveOk.bishop(activePosition, activeColor, board);
-        else if (activePiece.substring(6).equals("queen")) moveOk = MoveOk.queen(activePosition, activeColor, board);
-        else if (activePiece.substring(6).equals("king")) moveOk = MoveOk.king(activePosition, activeColor, board);
-        else throw new IllegalStateException("Unknown piece");
+        switch (activePiece.substring(6)) {
+            case "pawn":
+                moveOk = MoveOk.pawn(activePosition, activeColor, board);
+                break;
+            case "rook":
+                moveOk = MoveOk.rook(activePosition, activeColor, board);
+                break;
+            case "knight":
+                moveOk = MoveOk.knight(activePosition, activeColor, board);
+                break;
+            case "bishop":
+                moveOk = MoveOk.bishop(activePosition, activeColor, board);
+                break;
+            case "queen":
+                moveOk = MoveOk.queen(activePosition, activeColor, board);
+                break;
+            case "king":
+                moveOk = MoveOk.king(activePosition, activeColor, board);
+                break;
+            default:
+                throw new IllegalStateException("Unknown piece");
+        }
     }
 
     @Override
     public boolean move(int i, int j) {
-        //System.out.println(Arrays.toString(board));
-        System.out.println("----");
-        System.out.println(board[i][j]);
-        System.out.println("call to move");
-        System.out.println("i: " + i + " j: " + j);
-        System.out.println("activePiece: " + activePiece);
-        System.out.println("activePosition: " + Arrays.toString(activePosition));
-
-
+        // this chain handles the start of a move and deselection of piece
         if (activePiece.equals("")) { // player is to mark a piece for moving
             String tile = board[i][j];
             try {
@@ -249,62 +226,37 @@ public class ChessBoard implements BoardGame {
                     calculateOkMoves(activePosition);
 
                     msg = activeColor.replace(activeColor.charAt(0), Character.toUpperCase(activeColor.charAt(0)))
-                            + "'s turn, pick a destination tile";
+                            + "'s turn, pick a destination tile or pick another piece to move";
                 } else throw new IndexOutOfBoundsException("Wrong color!");
             } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
                 msg = "Choose a " + activeColor + " piece";
             }
-
-            System.out.println("---");
-            System.out.println("Black pieces taken: " + blackPiecesTaken);
-            System.out.println("White pieces taken: " + whitePiecesTaken + "\n\n");
-            return false;
-        }
-        else if (i == activePosition[0] && j == activePosition[1]) { // player presses the same tile as already marked
+            return false; // move started
+        } else if (i == activePosition[0] && j == activePosition[1]) { // player presses the same tile as already marked
             activePiece = "";
             msg = activeColor.replace(activeColor.charAt(0), Character.toUpperCase(activeColor.charAt(0))) + "'s turn, choose a piece to move";
-            System.out.println("Black pieces taken: " + blackPiecesTaken);
-            System.out.println("White pieces taken: " + whitePiecesTaken + "\n\n");
-            return false;
+            return false; // deselection, move not started
         }
-        //else if()
 
+        // this chain handles selection of tile to move to
         if (moveOk[i][j]) {
-            if (board[i][j].equals("-")) {
+            if (board[i][j].equals("-")) { // destination empty
                 moveToEmpty(i, j);
-                System.out.println("Black pieces taken: " + blackPiecesTaken);
-                System.out.println("White pieces taken: " + whitePiecesTaken + "\n\n");
                 return true;
-            } else if (board[i][j].substring(0, 5).equals(dormantColor)) {
+            } else if (board[i][j].substring(0, 5).equals(dormantColor)) { // destination has enemy piece
                 moveToKill(i, j);
-                System.out.println("Black pieces taken: " + blackPiecesTaken);
-                System.out.println("White pieces taken: " + whitePiecesTaken + "\n\n");
                 return true;
-            } else if (board[i][j].substring(0, 5).equals(activeColor)) { // THIS NEVER HAPPENS ANYMORE? /E
-                msg = activeColor.replace(activeColor.charAt(0), Character.toUpperCase(activeColor.charAt(0)))
-                        + "'s turn, pick a tile that is not inhabited by your own piece";
             }
-
-        } else { //handles remarks and non-valid moves
-            System.out.println(board[i][j]);
-            if (!board[i][j].equals("-") && board[i][j].substring(0, 5).equals(activeColor)){ // this is a remark, borde flyttas upp senare
+        } else { // handles remarks and non-valid moves
+            if (!board[i][j].equals("-") && board[i][j].substring(0, 5).equals(activeColor)) { // this is a remark, destination has a friendly piece
                 activePosition = new int[] {i, j};
-                msg = activeColor.replace(activeColor.charAt(0), Character.toUpperCase(activeColor.charAt(0)))
-                        + "'s turn, good remark";
-                String tile = board[i][j];
-                activePiece = tile;
+                activePiece = board[i][j];
                 calculateOkMoves(activePosition);
-
-                //need more HERE`???
-            }else{
+            } else {
                 msg = "Forbidden move, choose a correct destination tile";
             }
         }
-
-        System.out.println("Black pieces taken: " + blackPiecesTaken);
-        System.out.println("White pieces taken: " + whitePiecesTaken + "\n\n");
         return false;
-
     }
 
     @Override
@@ -342,5 +294,10 @@ public class ChessBoard implements BoardGame {
     @Override
     public String getTurn() {
         return activeColor;
+    }
+
+    @Override
+    public String getActivePiece() {
+        return activePiece;
     }
 }

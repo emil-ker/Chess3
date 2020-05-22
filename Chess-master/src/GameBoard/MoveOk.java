@@ -4,10 +4,9 @@ import java.util.ArrayList;
 
 public class MoveOk {
 
-    static String[] colors = new String[] {"black", "white"};
-    static String other_color;
-    static String own_color;
-    static boolean[][] good_moves;
+    private static final String[] colors = new String[] {"black", "white"};
+    private static String other_color;
+    private static boolean[][] good_moves;
 
     private static ArrayList[] blackPawn(int pos_i, int pos_j, String[][] board) {
         ArrayList<Integer> ok_i = new ArrayList<>();
@@ -24,15 +23,13 @@ public class MoveOk {
                 ok_i.add(pos_i + 1);
                 ok_j.add(pos_j + 1);
             }
-        } catch(IndexOutOfBoundsException indexOutOfBoundsException) {
-            System.err.println("Tile " + (pos_i + 1) + ", " + (pos_j + 1)  + " not on board");
+        } catch (IndexOutOfBoundsException ignored) {// should not do anything when looking outside the board
         } try {
             if (board[pos_i + 1][pos_j - 1].matches("white.*")) {
                 if (!ok_i.contains(pos_i)) ok_i.add(pos_i + 1);
                 ok_j.add(pos_j - 1);
             }
-        } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-            System.err.println("Tile " + (pos_i + 1) + ", " + (pos_j - 1)  + " not on board");
+        } catch (IndexOutOfBoundsException ignored) {// should not do anything when looking outside the board
         }
         return new ArrayList[] {ok_i, ok_j};
     }
@@ -52,15 +49,13 @@ public class MoveOk {
                 ok_i.add(pos_i - 1);
                 ok_j.add(pos_j + 1);
             }
-        } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-            System.err.println("Tile " + (pos_i - 1) + ", " + (pos_j + 1) + " not on board");
+        } catch (IndexOutOfBoundsException ignored) {// should not do anything when looking outside the board
         } try {
             if (board[pos_i - 1][pos_j - 1].matches("black.*")) {
                 if (!ok_i.contains(pos_i)) ok_i.add(pos_i - 1);
                 ok_j.add(pos_j - 1);
             }
-        } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-            System.err.println("Tile " + (pos_i - 1) + ", " + (pos_j - 1)  + " not on board");
+        } catch (IndexOutOfBoundsException ignored) {// should not do anything when looking outside the board
         }
         return new ArrayList[] {ok_i, ok_j};
     }
@@ -85,7 +80,6 @@ public class MoveOk {
     public static boolean[][] rook(int[] position, String color, String[][] board) {
         good_moves = new boolean[8][8];
         other_color = color.equals(colors[0]) ? colors[1] : colors[0];
-        own_color = color;
         checkHorizontal(position[0], position[1], board);
         checkVertical(position[0], position[1], board);
         return good_moves;
@@ -125,7 +119,6 @@ public class MoveOk {
         int i = position[0];
         int j = position[1];
         other_color = color.matches(colors[0]) ? colors[1] : colors[0];
-        own_color = color;
         if (i > 1 && i < 6 && j > 1 && j < 6) {
             // check two rows up & one col each side 2 calls
             // check one row up & two cols each side 2 calls
@@ -336,7 +329,6 @@ public class MoveOk {
     public static boolean[][] bishop(int[] position, String color, String[][] board) {
         good_moves = new boolean[8][8];
         other_color = color.equals(colors[0]) ? colors[1] : colors[0];
-        own_color = color;
         checkDiagonal(position[0], position[1], board);
         return good_moves;
     }
@@ -344,7 +336,6 @@ public class MoveOk {
     public static boolean[][] queen(int[] position, String color, String[][] board) {
         good_moves = new boolean[8][8];
         other_color = color.equals(colors[0]) ? colors[1] : colors[0];
-        own_color = color;
         checkVertical(position[0], position[1], board);
         checkHorizontal(position[0], position[1], board);
         checkDiagonal(position[0], position[1], board);
@@ -354,7 +345,6 @@ public class MoveOk {
     public static boolean[][] king(int[] position, String color, String[][] board) {
         good_moves = new boolean[8][8];
         other_color = color.equals(colors[0]) ? colors[1] : colors[0];
-        own_color = color;
         int i = position[0];
         int j = position[1];
         if (i == 0) {

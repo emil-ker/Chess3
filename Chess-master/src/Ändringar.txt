@@ -1,0 +1,7 @@
+Ändringar
+
+1. Gjorde brädet dynamiskt i sin storlek, storleken passas till konstruktorn
+2. Gör om i GamePiece så varje pjäs är en GamePiece istället för individuell spelpjäs
+3. Tar bort markering för senaste draget. Det handlar ju om att hänga med för att veta vad motspelaren gör
+4. Gjorde om moveStarted så den baseras helt på modellen
+5. Generella ändringar för att bli av med schack-beroendet i ViewControl

@@ -1,15 +1,16 @@
 package ViewControl; // denna borde flyttas till paketet GameBoard /E
+// Nej, Den hör till grafiken, varför den hör hemma i ViewControl
 
 import GamePieces.GamePiece;
 
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ A class representing a tile on an IRL BoardGame. Is both visible as a JButton and invisible at the same time as
+ it has attributes that the user playing the game doesn't see (for instance the contained piece).
+ */
 public class BoardTile extends JButton { // want package private or proteced access level
-    /**
-     A class representing a tile on an IRL BoardGame. Is both visible as a JButton and invisible at the same time as
-     it has attributes that the user playing the game doesn't see (for instance the contained piece).
-     */
     private final int i;
     private final int j;
     private GamePiece piece;
@@ -33,7 +34,7 @@ public class BoardTile extends JButton { // want package private or proteced acc
     void setBackground(Color usualColor, Color activeColor){ // Jbutton setbackground() should not be used!!!
         this.usualColor = usualColor;
         this.activeColor = activeColor;
-        super.setBackground(usualColor);
+        super.setBackground(usualColor); // this calls JButton's setBackground()
     }
 
     int[] getPosition() { return new int[] {i, j}; }

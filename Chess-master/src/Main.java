@@ -1,11 +1,11 @@
 import GameBoard.*;
 import ViewControl.ViewControl;
-import ViewControl.BoardGame;
+import GameBoard.BoardGame;
 
 public class Main {
 
     public static void main(String[] args) {
         BoardGame chess = new ChessBoard();
-        new ViewControl(chess);
+        new ViewControl(chess, 8);
     }
 }
