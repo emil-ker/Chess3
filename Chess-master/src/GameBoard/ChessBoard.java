@@ -12,8 +12,8 @@ public class ChessBoard implements BoardGame {
      */
 
     private final String[][] board = new String[8][8]; // represents chess board
-    private Color[] tileColors = {new Color(240, 240,240), Color.lightGray}; // to display for ViewControl
-    private Color activeTilesColor = Color.yellow;
+    private final Color[] tileColors = {new Color(240, 240,240), Color.lightGray}; // to display for ViewControl
+    private final Color activeTilesColor = Color.yellow;
     private final String[] colors = {"black", "white"};
     private String activeColor = colors[1];
     private String dormantColor = colors[0];
@@ -22,8 +22,8 @@ public class ChessBoard implements BoardGame {
     private int[] activePosition;
     private final int maxIndex = 7;
     private boolean chessFlag = false; // used to flag that a chessmove has been made for the "switchTurn()" function
-    private final ArrayList<String> whitePiecesTaken = new ArrayList<>();
-    private final ArrayList<String> blackPiecesTaken = new ArrayList<>();
+    private final ArrayList<String> whitePiecesTaken = new ArrayList<>(); // not used in graphics
+    private final ArrayList<String> blackPiecesTaken = new ArrayList<>(); // not used in graphics
     private int[] promotionTile; // has values if we at the end of turn need to promote pawn to queen
     private boolean[][] moveOk = new boolean[8][8]; // represents valid moves for activePiece (aka marked piece)
 
